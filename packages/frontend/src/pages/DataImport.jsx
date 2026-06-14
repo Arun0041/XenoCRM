@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Database, Upload, AlertCircle, CheckCircle2, Loader2, FileJson } from 'lucide-react';
 import api from '../services/api';
 import clsx from 'clsx';
@@ -28,22 +28,60 @@ export default function DataImport() {
   }
 ]`;
 
-  const seedCustomers = `[
-  {"name": "Alice Smith", "email": "alice@example.com", "phone": "111-222-3333", "city": "New York", "tags": ["vip", "early-adopter"]},
-  {"name": "Bob Jones", "email": "bob@example.com", "phone": "444-555-6666", "city": "London", "tags": ["frequent"]},
-  {"name": "Charlie Brown", "email": "charlie@example.com", "city": "Mumbai", "tags": []},
-  {"name": "Diana Prince", "email": "diana@example.com", "phone": "777-888-9999", "city": "Paris", "tags": ["vip"]},
-  {"name": "Evan Wright", "email": "evan@example.com", "city": "New York", "tags": ["churn-risk"]}
-]`;
+  const { seedCustomers, seedOrders } = useMemo(() => {
+    const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Pune', 'Hyderabad'];
+    const TAGS_POOL = [
+      ['loyalist', 'high-value'], ['new', 'app-user'], ['churned'], ['weekend-buyer', 'loyalist'],
+      ['high-value'], ['new'], ['churned', 'price-sensitive'], ['app-user']
+    ];
+    const COFFEE_ITEMS = [
+      { name: 'Oat Latte', price: 320 }, { name: 'Cold Brew', price: 280 }, { name: 'Cappuccino', price: 250 },
+      { name: 'Flat White', price: 300 }, { name: 'Matcha Latte', price: 350 }, { name: 'Espresso', price: 180 }, { name: 'Croissant', price: 220 }
+    ];
+    const firstNames = ['Priya','Arjun','Sneha','Rahul','Meera','Vikram','Ananya','Karan','Divya','Rohit',
+      'Pooja','Amit','Swati','Nikhil','Kavya','Siddharth','Nisha','Aditya','Riya','Manish',
+      'Tanya','Suresh','Deepika','Aakash','Simran','Varun','Anjali','Rajesh','Neha','Gaurav',
+      'Ishaan','Shruti','Pratik','Komal','Yash','Pallavi','Mihir','Sakshi','Vivek','Trisha',
+      'Akshay','Bhavna','Dhruv','Preeti','Chirag','Monika','Harsh','Swara','Neel','Zara'];
+    const lastNames = ['Sharma','Patel','Iyer','Singh','Gupta','Mehta','Nair','Joshi','Agarwal','Kumar'];
 
-  const seedOrders = `[
-  {"customer_email": "alice@example.com", "amount": 1200, "items": [{"name": "Premium Jacket", "qty": 1}], "ordered_at": "2023-11-01T10:00:00Z"},
-  {"customer_email": "alice@example.com", "amount": 350, "items": [{"name": "T-Shirt", "qty": 2}], "ordered_at": "2023-12-15T14:30:00Z"},
-  {"customer_email": "bob@example.com", "amount": 500, "items": [{"name": "Sneakers", "qty": 1}], "ordered_at": "2023-10-20T09:15:00Z"},
-  {"customer_email": "charlie@example.com", "amount": 200, "items": [{"name": "Cap", "qty": 1}], "ordered_at": "2023-09-10T11:45:00Z"},
-  {"customer_email": "diana@example.com", "amount": 2500, "items": [{"name": "Handbag", "qty": 1}], "ordered_at": "2024-01-05T16:20:00Z"},
-  {"customer_email": "diana@example.com", "amount": 400, "items": [{"name": "Wallet", "qty": 1}], "ordered_at": "2024-02-10T10:00:00Z"}
-]`;
+    const customers = [];
+    const orders = [];
+
+    for (let i = 0; i < 50; i++) {
+      const name = `${firstNames[i]} ${lastNames[i % lastNames.length]}`;
+      const city = CITIES[i % CITIES.length];
+      const tags = TAGS_POOL[i % TAGS_POOL.length];
+      const email = `${firstNames[i].toLowerCase()}${i}@example.com`;
+      const phone = `+91${9000000000 + i}`;
+      
+      customers.push({ name, email, phone, city, tags });
+
+      const orderCount = 3 + Math.floor(Math.random() * 6);
+      for (let j = 0; j < orderCount; j++) {
+        const items = Array.from({ length: 1 + Math.floor(Math.random() * 3) }, () => {
+          const item = COFFEE_ITEMS[Math.floor(Math.random() * COFFEE_ITEMS.length)];
+          return { ...item, qty: 1 + Math.floor(Math.random() * 2) };
+        });
+        const amount = items.reduce((sum, it) => sum + it.price * it.qty, 0);
+        
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+
+        orders.push({
+          customer_email: email,
+          amount,
+          items,
+          ordered_at: date.toISOString(),
+        });
+      }
+    }
+
+    return {
+      seedCustomers: JSON.stringify(customers, null, 2),
+      seedOrders: JSON.stringify(orders, null, 2)
+    };
+  }, []);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

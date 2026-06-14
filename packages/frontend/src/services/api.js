@@ -59,6 +59,9 @@ export const streamInsight = async (data) => {
 };
 
 // ─── SSE URL builder ──────────────────────────────────────
-export const getSSEUrl = (campaignId) => `${API_BASE}/api/campaigns/${campaignId}/stream`;
+export const getSSEUrl = (campaignId) => {
+  const token = localStorage.getItem('jwt_token');
+  return `${API_BASE}/api/campaigns/${campaignId}/stream${token ? `?token=${token}` : ''}`;
+};
 
 export default api;

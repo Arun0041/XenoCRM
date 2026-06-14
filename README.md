@@ -6,6 +6,18 @@ A production-quality, AI-native Mini CRM built for D2C/retail brands. Helps mark
 
 ---
 
+## Core Features
+
+- 🧠 **AI-Native Text-to-SQL Segmentation:** Marketers describe their target audience in natural language (e.g., *"Find users in Mumbai who spent over 5000"*), and the AI (Groq / Llama 3.1) translates it directly into secure PostgreSQL `WHERE` and `HAVING` clauses for deep relational filtering.
+- ✍️ **Context-Aware AI Drafting:** The Campaign Message AI physically reads the underlying SQL logic of the chosen segment to understand *exactly* who the audience is, generating hyper-personalized message drafts that reference specific audience traits (e.g., location, VIP status, churn risk).
+- 🚀 **Enterprise Message Dispatching (BullMQ + Redis):** Outbound campaigns are processed asynchronously through a robust background queue, ensuring the main server thread is never blocked, even when dispatching to thousands of users.
+- 🎭 **Mock Channel Simulator (Service Stubbing):** A completely decoupled secondary server mocks third-party vendors (like Twilio or Meta), accepting outbound requests and firing asynchronous delivery webhooks back to the CRM with simulated network delays.
+- ⚡ **Real-Time Live Dashboard (SSE):** As delivery webhooks hit the CRM Backend, Server-Sent Events (SSE) instantly push the aggregated stats to the React frontend, animating the delivery progress bars in real-time without polling.
+- 📊 **AI Campaign Insights:** Post-campaign, the AI analyzes the final delivery statistics (sent, delivered, opened, clicked, failed) to generate actionable marketing insights and suggestions for future outreach.
+- 🛡️ **Idempotent Delivery Webhooks:** Callback webhooks use strict idempotency keys and SQL `ARRAY_POSITION` checks to ensure message states only move forward (`queued → sent → delivered → opened → clicked`) and eliminate race conditions.
+
+---
+
 ## Architecture
 
 ```
@@ -17,7 +29,7 @@ A production-quality, AI-native Mini CRM built for D2C/retail brands. Helps mark
 │  • Dashboard     │ SSE │  • Segmentation       │ CB  │  • Simulate      │
 │  • Customers     │     │  • Campaign Dispatch   │     │    delivery      │
 │  • Segments      │     │  • Webhook Receipt     │     │  • Async         │
-│  • Campaigns     │     │  • AI Service (Ollama) │     │    callbacks     │
+│  • Campaigns     │     │  • AI Service (Groq)   │     │    callbacks     │
 │  • Insights      │     │  • SSE Manager         │     │  • Per-channel   │
 │                  │     │                       │     │    outcome rates  │
 └──────────────────┘     └───────────┬───────────┘     └──────────────────┘
@@ -53,7 +65,7 @@ Channel Stub accepts immediately                              │
 - **Node.js** 18+
 - **PostgreSQL** 14+
 - **Redis** 7+ (or use Docker: `docker run -p 6379:6379 redis`)
-- **Ollama** (optional, for AI features): https://ollama.com
+- **Groq API Key**: Free at https://console.groq.com (for Llama 3.1 AI features)
 
 ### 1. Clone & Install
 
@@ -88,16 +100,7 @@ npm run db:setup
 npm run seed
 ```
 
-### 4. (Optional) Start Ollama for AI Features
-
-```bash
-ollama pull llama3
-ollama serve
-```
-
-> If Ollama is not running, AI features gracefully fall back to keyword-based parsing and template messages.
-
-### 5. Start Development
+### 4. Start Development
 
 ```bash
 npm run dev
@@ -169,7 +172,6 @@ This starts all 3 services concurrently:
 | POST | `/api/webhooks/receipt` | Delivery callback (idempotent) |
 | POST | `/api/ai/draft-message` | AI message drafting (streaming) |
 | POST | `/api/ai/insight` | AI campaign insight (streaming) |
-| GET | `/api/ai/status` | Check Ollama availability |
 | GET | `/api/health` | Health check |
 
 ### Channel Stub (port 3002)
@@ -187,7 +189,7 @@ This starts all 3 services concurrently:
 - **Backend**: Node.js + Express 4, raw `pg` (no ORM), BullMQ + ioredis
 - **Database**: PostgreSQL (6 tables, raw SQL)
 - **Cache/Queue**: Redis (BullMQ)
-- **AI**: Ollama (Llama 3) with graceful fallback
+- **AI**: Groq API (Llama 3.1)
 - **Real-time**: Server-Sent Events (SSE)
 
 ---

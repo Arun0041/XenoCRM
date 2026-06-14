@@ -112,7 +112,7 @@ export default function Landing() {
       </section>
 
       <footer className="text-center py-8 text-xs text-text-muted border-t border-white/5">
-        &copy; 2026 Xeno Mini CRM Take-Home Assignment
+        &copy; 2026 Xeno Mini CRM
       </footer>
     </div>
   );

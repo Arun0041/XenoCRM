@@ -91,8 +91,8 @@ export default function CampaignDetail() {
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.slice(6));
-                if (data.token) {
-                  setInsight(prev => prev + data.token);
+                if (data.text) {
+                  setInsight(prev => prev + data.text);
                 }
               } catch (e) {}
             }

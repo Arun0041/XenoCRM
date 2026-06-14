@@ -133,14 +133,26 @@ async function getCustomersByFilters(filters = {}, userId) {
 
   const havingConditions = [];
 
-  if (filters.city) {
-    conditions.push(`c.city ILIKE $${i++}`);
-    values.push(filters.city);
-  }
+  if (filters.sql_condition) {
+    // If the AI generated a raw SQL condition (Text-to-SQL mode)
+    conditions.push(`(${filters.sql_condition})`);
+  } else {
+    // Legacy Rule Builder JSON fields
+    if (filters.city) {
+      conditions.push(`c.city ILIKE $${i++}`);
+      values.push(filters.city);
+    }
 
-  if (filters.tags && filters.tags.length > 0) {
-    conditions.push(`c.tags && $${i++}`);
-    values.push(filters.tags);
+    if (filters.search) {
+      conditions.push(`(c.name ILIKE $${i} OR c.email ILIKE $${i})`);
+      values.push(`%${filters.search}%`);
+      i++;
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      conditions.push(`c.tags && $${i++}`);
+      values.push(filters.tags);
+    }
   }
 
   // Build WHERE clause (on customers table columns only)

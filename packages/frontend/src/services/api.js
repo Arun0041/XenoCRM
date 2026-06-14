@@ -33,18 +33,26 @@ export const fetchCampaignLogs = (id, page = 1) => api.get(`/campaigns/${id}/log
 export const checkAIStatus = () => api.get('/ai/status');
 
 export const streamDraftMessage = async (data) => {
+  const token = localStorage.getItem('jwt_token');
   const response = await fetch(`${API_BASE}/api/ai/draft-message`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    },
     body: JSON.stringify(data),
   });
   return response;
 };
 
 export const streamInsight = async (data) => {
+  const token = localStorage.getItem('jwt_token');
   const response = await fetch(`${API_BASE}/api/ai/insight`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    },
     body: JSON.stringify(data),
   });
   return response;

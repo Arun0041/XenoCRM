@@ -94,7 +94,7 @@ async function getRecentCampaigns(userId, limit = 5) {
     SELECT c.*, s.name as segment_name
     FROM campaigns c
     LEFT JOIN segments s ON c.segment_id = s.id
-    WHERE c.user_id = $1
+    WHERE c.user_id = $1 AND c.status != 'draft'
     ORDER BY c.created_at DESC
     LIMIT $2
   `, [userId, limit]);

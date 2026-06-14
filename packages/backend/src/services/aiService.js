@@ -9,20 +9,27 @@ async function promptToFilters(naturalLanguagePrompt) {
       messages: [
         {
           role: 'system',
-          content: `You are a CRM query builder for a coffee brand. Convert the user's natural language description into a JSON filter object.
-CRITICAL: The values for all number fields MUST be a plain integer. DO NOT use nested objects, operators (like $lt, $gt), or strings.
-Assume today is ${new Date().toISOString().split('T')[0]}. Calculate days accordingly for date references.
+          content: `You are an expert PostgreSQL Query Builder for a CRM.
+You will be given a natural language request to filter customers.
+Output ONLY a valid PostgreSQL WHERE clause condition. 
+Do not include the word "WHERE". Do not output anything else. No markdown formatting. No explanation.
 
-Available filter fields (use ONLY if explicitly mentioned in the prompt):
-- city: string (exact city name)
-- min_spent: number (minimum total spent in INR)
-- max_spent: number (maximum total spent in INR)
-- min_orders: number (minimum number of orders placed)
-- last_ordered_before: string (exact YYYY-MM-DD date, e.g., "2026-05-01")
-- last_ordered_after: string (exact YYYY-MM-DD date, e.g., "2026-05-01")
-- tags: array of strings from ["loyalist","churned","new","high-value","weekend-buyer","app-user","price-sensitive"]
+Table schema for "customers":
+- id (UUID)
+- name (VARCHAR)
+- email (VARCHAR)
+- phone (VARCHAR)
+- city (VARCHAR)
+- tags (TEXT[]) - Use PostgreSQL array syntax, e.g. 'loyalist' = ANY(tags)
+- total_orders (INT)
+- total_spent (DECIMAL)
+- last_order_date (TIMESTAMPTZ)
+- created_at (TIMESTAMPTZ)
 
-Respond ONLY with valid flat JSON (key-value pairs only). No explanation. No markdown fences.`
+Assume today is ${new Date().toISOString().split('T')[0]}.
+
+Example input: "Customers in Bangalore whose name starts with A"
+Example output: city ILIKE 'Bangalore' AND name ILIKE 'A%'`
         },
         { role: 'user', content: naturalLanguagePrompt }
       ],
@@ -30,9 +37,11 @@ Respond ONLY with valid flat JSON (key-value pairs only). No explanation. No mar
       temperature: 0.1,
     });
 
-    const text = completion.choices[0]?.message?.content?.trim() || '{}';
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    const text = completion.choices[0]?.message?.content?.trim() || '';
+    const cleanSql = text.replace(/```sql|```|```json/g, '').trim();
+    
+    // We wrap the raw SQL inside the filters object so the rest of the application still treats it as a filter payload
+    return { sql_condition: cleanSql };
   } catch (err) {
     console.error('AI filter error:', err.message);
     return {}; // fallback: return all customers
@@ -49,9 +58,16 @@ async function streamDraftMessage(segmentDescription, channel, tone, res) {
       messages: [
         {
           role: 'system',
-          content: `You are a marketing copywriter for BrewCo, a premium D2C coffee brand in India. Write a ${tone} campaign message for ${channel.toUpperCase()}. ${charLimit}. Use {{name}} as a placeholder for the customer's first name. Do not include a subject line. Output ONLY the message text.`
+          content: `You are an elite marketing copywriter for BrewCo, a premium D2C coffee brand in India.
+Your task is to write a highly customized, ${tone} campaign message for ${channel.toUpperCase()}.
+CRITICAL RULES:
+1. Length constraint: ${charLimit}.
+2. Personalization: Always use {{name}} as a placeholder for the customer's first name.
+3. Deep Customization: Analyze the provided "Targeting Logic" (SQL/JSON filters) to understand exactly WHO the audience is. Directly reference their specific traits in the message! For example, if they live in Bangalore, mention the city. If they haven't ordered in months, say we miss them. If they spend a lot, treat them like VIPs.
+4. Do not include a subject line.
+5. Output ONLY the final message text.`
         },
-        { role: 'user', content: `Write a message for this audience segment: ${segmentDescription}` }
+        { role: 'user', content: `Write a hyper-personalized message for this audience segment:\n\n${segmentDescription}` }
       ],
       max_tokens: 300,
       temperature: 0.8,

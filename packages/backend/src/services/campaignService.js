@@ -14,7 +14,7 @@ async function dispatchCampaign(campaignId, userId) {
     throw new Error(`Campaign cannot be sent — current status: ${campaign.status}`);
   }
 
-  const customers = await getCustomersInSegment(campaign.segment_id);
+  const customers = await getCustomersInSegment(campaign.segment_id, userId);
   if (customers.length === 0) {
     throw new Error('No customers match this segment');
   }

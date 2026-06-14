@@ -74,6 +74,15 @@ export default function CampaignBuilder() {
     .replace(/\{\{name\}\}/g, previewCustomer?.name?.split(' ')[0] || 'Priya')
     .replace(/\{\{city\}\}/g, previewCustomer?.city || 'Mumbai');
 
+  const getAudienceContext = () => {
+    if (!selectedSegment) return '';
+    let context = `Segment Name: ${selectedSegment.name}\n`;
+    if (selectedSegment.description) context += `Description: ${selectedSegment.description}\n`;
+    const filters = typeof selectedSegment.filters === 'string' ? selectedSegment.filters : JSON.stringify(selectedSegment.filters);
+    context += `Targeting Logic: ${filters}`;
+    return context;
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6" id="campaign-builder-page">
       {/* Header */}
@@ -217,7 +226,7 @@ export default function CampaignBuilder() {
 
               {showAI && (
                 <AIMessageComposer
-                  segmentDescription={selectedSegment?.description || selectedSegment?.name || ''}
+                  segmentDescription={getAudienceContext()}
                   channel={form.channel}
                   onUseMessage={(msg) => {
                     setForm(f => ({ ...f, message_template: msg }));

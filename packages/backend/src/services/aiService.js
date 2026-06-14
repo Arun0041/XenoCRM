@@ -10,6 +10,9 @@ async function promptToFilters(naturalLanguagePrompt) {
         {
           role: 'system',
           content: `You are a CRM query builder for a coffee brand. Convert the user's natural language description into a JSON filter object.
+CRITICAL: The values for all number fields MUST be a plain integer. DO NOT use nested objects, operators (like $lt, $gt), or strings.
+Assume today is ${new Date().toISOString().split('T')[0]}. Calculate days accordingly for date references.
+
 Available filter fields:
 - city: string (exact city name)
 - min_spent: number (minimum total spent in INR)
@@ -18,7 +21,8 @@ Available filter fields:
 - days_since_last_order: number (inactive for more than N days)
 - days_active_within: number (ordered within last N days)
 - tags: array of strings from ["loyalist","churned","new","high-value","weekend-buyer","app-user","price-sensitive"]
-Respond ONLY with valid JSON. No explanation. No markdown fences.`
+
+Respond ONLY with valid flat JSON (key-value pairs only). No explanation. No markdown fences.`
         },
         { role: 'user', content: naturalLanguagePrompt }
       ],

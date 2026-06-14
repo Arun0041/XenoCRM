@@ -191,6 +191,16 @@ async function getCustomersByFilters(filters = {}, userId) {
     }
   }
 
+  if (filters.last_ordered_before) {
+    havingConditions.push(`MAX(o.ordered_at) < $${i++}::DATE`);
+    values.push(filters.last_ordered_before);
+  }
+
+  if (filters.last_ordered_after) {
+    havingConditions.push(`MAX(o.ordered_at) > $${i++}::DATE`);
+    values.push(filters.last_ordered_after);
+  }
+
   if (havingConditions.length > 0) {
     baseQuery += ` HAVING ${havingConditions.join(' AND ')}`;
   }

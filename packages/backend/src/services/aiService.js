@@ -13,13 +13,13 @@ async function promptToFilters(naturalLanguagePrompt) {
 CRITICAL: The values for all number fields MUST be a plain integer. DO NOT use nested objects, operators (like $lt, $gt), or strings.
 Assume today is ${new Date().toISOString().split('T')[0]}. Calculate days accordingly for date references.
 
-Available filter fields:
+Available filter fields (use ONLY if explicitly mentioned in the prompt):
 - city: string (exact city name)
 - min_spent: number (minimum total spent in INR)
 - max_spent: number (maximum total spent in INR)
 - min_orders: number (minimum number of orders placed)
-- days_since_last_order: number (inactive for more than N days)
-- days_active_within: number (ordered within last N days)
+- last_ordered_before: string (exact YYYY-MM-DD date, e.g., "2026-05-01")
+- last_ordered_after: string (exact YYYY-MM-DD date, e.g., "2026-05-01")
 - tags: array of strings from ["loyalist","churned","new","high-value","weekend-buyer","app-user","price-sensitive"]
 
 Respond ONLY with valid flat JSON (key-value pairs only). No explanation. No markdown fences.`

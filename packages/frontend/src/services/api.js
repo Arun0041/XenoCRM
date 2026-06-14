@@ -12,6 +12,7 @@ export const fetchCustomers = (params) => api.get('/customers', { params });
 export const fetchCustomerStats = () => api.get('/customers/stats');
 export const createCustomer = (data) => api.post('/customers', data);
 export const importCustomers = (customers) => api.post('/customers/import', { customers });
+export const fetchDummyData = () => api.get('/customers/dummy');
 
 // ─── Segments ─────────────────────────────────────────────
 export const fetchSegments = () => api.get('/segments');

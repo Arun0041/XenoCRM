@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Database, Upload, AlertCircle, CheckCircle2, Loader2, FileJson } from 'lucide-react';
-import api from '../services/api';
+import api, { fetchDummyData } from '../services/api';
 import clsx from 'clsx';
 
 export default function DataImport() {
@@ -28,60 +28,19 @@ export default function DataImport() {
   }
 ]`;
 
-  const { seedCustomers, seedOrders } = useMemo(() => {
-    const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Pune', 'Hyderabad'];
-    const TAGS_POOL = [
-      ['loyalist', 'high-value'], ['new', 'app-user'], ['churned'], ['weekend-buyer', 'loyalist'],
-      ['high-value'], ['new'], ['churned', 'price-sensitive'], ['app-user']
-    ];
-    const COFFEE_ITEMS = [
-      { name: 'Oat Latte', price: 320 }, { name: 'Cold Brew', price: 280 }, { name: 'Cappuccino', price: 250 },
-      { name: 'Flat White', price: 300 }, { name: 'Matcha Latte', price: 350 }, { name: 'Espresso', price: 180 }, { name: 'Croissant', price: 220 }
-    ];
-    const firstNames = ['Priya','Arjun','Sneha','Rahul','Meera','Vikram','Ananya','Karan','Divya','Rohit',
-      'Pooja','Amit','Swati','Nikhil','Kavya','Siddharth','Nisha','Aditya','Riya','Manish',
-      'Tanya','Suresh','Deepika','Aakash','Simran','Varun','Anjali','Rajesh','Neha','Gaurav',
-      'Ishaan','Shruti','Pratik','Komal','Yash','Pallavi','Mihir','Sakshi','Vivek','Trisha',
-      'Akshay','Bhavna','Dhruv','Preeti','Chirag','Monika','Harsh','Swara','Neel','Zara'];
-    const lastNames = ['Sharma','Patel','Iyer','Singh','Gupta','Mehta','Nair','Joshi','Agarwal','Kumar'];
-
-    const customers = [];
-    const orders = [];
-
-    for (let i = 0; i < 50; i++) {
-      const name = `${firstNames[i]} ${lastNames[i % lastNames.length]}`;
-      const city = CITIES[i % CITIES.length];
-      const tags = TAGS_POOL[i % TAGS_POOL.length];
-      const email = `${firstNames[i].toLowerCase()}${i}@example.com`;
-      const phone = `+91${9000000000 + i}`;
-      
-      customers.push({ name, email, phone, city, tags });
-
-      const orderCount = 3 + Math.floor(Math.random() * 6);
-      for (let j = 0; j < orderCount; j++) {
-        const items = Array.from({ length: 1 + Math.floor(Math.random() * 3) }, () => {
-          const item = COFFEE_ITEMS[Math.floor(Math.random() * COFFEE_ITEMS.length)];
-          return { ...item, qty: 1 + Math.floor(Math.random() * 2) };
-        });
-        const amount = items.reduce((sum, it) => sum + it.price * it.qty, 0);
-        
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 90));
-
-        orders.push({
-          customer_email: email,
-          amount,
-          items,
-          ordered_at: date.toISOString(),
-        });
-      }
+  const handleLoadTestData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchDummyData();
+      const { customers, orders } = res.data;
+      setJsonText(JSON.stringify(activeTab === 'customers' ? customers : orders, null, 2));
+      setResult(null);
+    } catch (err) {
+      setResult({ type: 'error', message: 'Failed to fetch test data from server' });
+    } finally {
+      setLoading(false);
     }
-
-    return {
-      seedCustomers: JSON.stringify(customers, null, 2),
-      seedOrders: JSON.stringify(orders, null, 2)
-    };
-  }, []);
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -185,7 +144,7 @@ export default function DataImport() {
               <label className="text-sm font-medium text-text-primary">Paste JSON Data</label>
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => setJsonText(activeTab === 'customers' ? seedCustomers : seedOrders)}
+                  onClick={handleLoadTestData}
                   className="text-xs font-medium text-accent-blue-light hover:text-accent-blue transition-colors flex items-center gap-1"
                 >
                   <Database className="w-3.5 h-3.5" />

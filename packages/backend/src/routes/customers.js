@@ -4,10 +4,13 @@
  * POST /api/customers          — Create single customer
  * POST /api/customers/import   — Bulk import (JSON array)
  * GET  /api/customers/stats    — Aggregate stats for dashboard
+ * GET  /api/customers/dummy    — Generate dummy data
  */
 const express = require('express');
 const router = express.Router();
+const pool = require('../db/pool');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { generateDummyData } = require('../utils/dummyData');
 const {
   getAllCustomers,
   getCustomerById,
@@ -15,6 +18,12 @@ const {
   bulkImportCustomers,
   getCustomerStats,
 } = require('../db/queries/customers');
+
+// Generate dummy data JSON for the frontend Sandbox
+router.get('/dummy', asyncHandler(async (req, res) => {
+  const data = generateDummyData();
+  res.json(data);
+}));
 
 // List customers with optional filters
 router.get('/', asyncHandler(async (req, res) => {

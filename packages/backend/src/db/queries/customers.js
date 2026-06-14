@@ -152,30 +152,43 @@ async function getCustomersByFilters(filters = {}, userId) {
 
   // HAVING filters (on aggregated order data)
   if (filters.min_spent !== undefined && filters.min_spent !== null && filters.min_spent !== '') {
-    havingConditions.push(`COALESCE(SUM(o.amount), 0) >= $${i++}`);
-    values.push(Number(filters.min_spent));
+    const val = Number(filters.min_spent);
+    if (!Number.isNaN(val)) {
+      havingConditions.push(`COALESCE(SUM(o.amount), 0) >= $${i++}`);
+      values.push(val);
+    }
   }
 
   if (filters.max_spent !== undefined && filters.max_spent !== null && filters.max_spent !== '') {
-    havingConditions.push(`COALESCE(SUM(o.amount), 0) <= $${i++}`);
-    values.push(Number(filters.max_spent));
+    const val = Number(filters.max_spent);
+    if (!Number.isNaN(val)) {
+      havingConditions.push(`COALESCE(SUM(o.amount), 0) <= $${i++}`);
+      values.push(val);
+    }
   }
 
   if (filters.min_orders !== undefined && filters.min_orders !== null && filters.min_orders !== '') {
-    havingConditions.push(`COUNT(o.id) >= $${i++}`);
-    values.push(Number(filters.min_orders));
+    const val = Number(filters.min_orders);
+    if (!Number.isNaN(val)) {
+      havingConditions.push(`COUNT(o.id) >= $${i++}`);
+      values.push(val);
+    }
   }
 
   if (filters.days_since_last_order !== undefined && filters.days_since_last_order !== null && filters.days_since_last_order !== '') {
-    // customers whose LAST order was MORE than N days ago (churned/inactive)
-    havingConditions.push(`(MAX(o.ordered_at) IS NULL OR MAX(o.ordered_at) <= NOW() - ($${i++} || ' days')::INTERVAL)`);
-    values.push(Number(filters.days_since_last_order));
+    const val = Number(filters.days_since_last_order);
+    if (!Number.isNaN(val)) {
+      havingConditions.push(`(MAX(o.ordered_at) IS NULL OR MAX(o.ordered_at) <= NOW() - ($${i++} || ' days')::INTERVAL)`);
+      values.push(val);
+    }
   }
 
   if (filters.days_active_within !== undefined && filters.days_active_within !== null && filters.days_active_within !== '') {
-    // customers who ordered WITHIN last N days (active/recent)
-    havingConditions.push(`MAX(o.ordered_at) >= NOW() - ($${i++} || ' days')::INTERVAL`);
-    values.push(Number(filters.days_active_within));
+    const val = Number(filters.days_active_within);
+    if (!Number.isNaN(val)) {
+      havingConditions.push(`MAX(o.ordered_at) >= NOW() - ($${i++} || ' days')::INTERVAL`);
+      values.push(val);
+    }
   }
 
   if (havingConditions.length > 0) {

@@ -69,38 +69,31 @@ async function createCustomer(data, userId) {
 
 // ─── Bulk import ──────────────────────────────────────────
 async function bulkImportCustomers(customers, userId) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const imported = [];
+  const validCustomers = customers.filter(c => c.name && c.email);
+  if (validCustomers.length === 0) return [];
 
-    for (const c of customers) {
-      if (!c.email || !c.name) {
-        console.warn('Skipping customer missing name or email:', c);
-        continue;
-      }
-      const result = await client.query(
-        `INSERT INTO customers (user_id, name, email, phone, city, tags, total_orders, total_spent)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         ON CONFLICT (user_id, email) DO UPDATE SET
-           name = EXCLUDED.name,
-           phone = COALESCE(EXCLUDED.phone, customers.phone),
-           city = COALESCE(EXCLUDED.city, customers.city),
-           tags = COALESCE(EXCLUDED.tags, customers.tags)
-         RETURNING *`,
-        [userId, c.name, c.email, c.phone || null, c.city || null, c.tags || '{}', c.total_orders || 0, c.total_spent || 0]
-      );
-      imported.push(result.rows[0]);
-    }
+  const values = [];
+  const params = [];
+  let paramIdx = 1;
 
-    await client.query('COMMIT');
-    return imported;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    client.release();
+  for (const c of validCustomers) {
+    values.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+    params.push(userId, c.name, c.email, c.phone || null, c.city || null, c.tags || '{}', c.total_orders || 0, c.total_spent || 0);
   }
+
+  const query = `
+    INSERT INTO customers (user_id, name, email, phone, city, tags, total_orders, total_spent)
+    VALUES ${values.join(', ')}
+    ON CONFLICT (user_id, email) DO UPDATE SET
+      name = EXCLUDED.name,
+      phone = COALESCE(EXCLUDED.phone, customers.phone),
+      city = COALESCE(EXCLUDED.city, customers.city),
+      tags = COALESCE(EXCLUDED.tags, customers.tags)
+    RETURNING *
+  `;
+
+  const result = await pool.query(query, params);
+  return result.rows;
 }
 
 // ─── Aggregate stats ──────────────────────────────────────

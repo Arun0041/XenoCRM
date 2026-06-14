@@ -4,45 +4,50 @@ const pool = require('../pool');
  * Bulk import orders and automatically recalculate customer stats
  */
 async function bulkImportOrders(orders, userId) {
+  const validOrders = orders.filter(o => o.customer_email && o.amount !== undefined && o.amount !== null);
+  if (validOrders.length === 0) return [];
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const imported = [];
+
+    // 1. Get all customer IDs in a single query
+    const emails = [...new Set(validOrders.map(o => o.customer_email))];
+    const customerRes = await client.query(
+      'SELECT id, email FROM customers WHERE user_id = $1 AND email = ANY($2)',
+      [userId, emails]
+    );
+    const emailToId = {};
+    customerRes.rows.forEach(r => { emailToId[r.email] = r.id; });
+
+    // 2. Prepare bulk insert
+    const values = [];
+    const params = [];
+    let paramIdx = 1;
     const affectedCustomerIds = new Set();
 
-    for (const o of orders) {
-      // customer_email and amount are strictly mandatory
-      if (!o.customer_email || o.amount === undefined || o.amount === null) {
-        console.warn('Skipping order missing customer_email or amount:', o);
-        continue;
-      }
+    for (const o of validOrders) {
+      const customerId = emailToId[o.customer_email];
+      if (!customerId) continue; // Skip if customer doesn't exist
 
-      // 1. Lookup customer by email and user_id
-      const customerRes = await client.query(
-        'SELECT id FROM customers WHERE email = $1 AND user_id = $2',
-        [o.customer_email, userId]
-      );
-      
-      if (customerRes.rows.length === 0) {
-        console.warn('Skipping order for unknown customer email:', o.customer_email);
-        continue;
-      }
-      
-      const customerId = customerRes.rows[0].id;
       affectedCustomerIds.add(customerId);
-
-      // 2. Insert order
-      const result = await client.query(
-        `INSERT INTO orders (customer_id, amount, items, ordered_at)
-         VALUES ($1, $2, $3, COALESCE($4::TIMESTAMPTZ, NOW()))
-         RETURNING *`,
-        [customerId, o.amount, o.items ? JSON.stringify(o.items) : '[]', o.ordered_at || null]
-      );
-      
-      imported.push(result.rows[0]);
+      values.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, COALESCE($${paramIdx++}::TIMESTAMPTZ, NOW()))`);
+      params.push(customerId, o.amount, o.items ? JSON.stringify(o.items) : '[]', o.ordered_at || null);
     }
 
-    // 3. Recalculate stats for all affected customers
+    if (values.length === 0) {
+      await client.query('ROLLBACK');
+      return [];
+    }
+
+    const insertQuery = `
+      INSERT INTO orders (customer_id, amount, items, ordered_at)
+      VALUES ${values.join(', ')}
+      RETURNING *
+    `;
+    const result = await client.query(insertQuery, params);
+
+    // 3. Recalculate stats for all affected customers in bulk
     if (affectedCustomerIds.size > 0) {
       const idsArray = Array.from(affectedCustomerIds);
       await client.query(
@@ -62,7 +67,7 @@ async function bulkImportOrders(orders, userId) {
     }
 
     await client.query('COMMIT');
-    return imported;
+    return result.rows;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

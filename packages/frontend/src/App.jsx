@@ -26,11 +26,11 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/segments" element={<Segments />} />
-        <Route path="/campaigns/new" element={<CampaignBuilder />} />
-        <Route path="/campaigns/:id" element={<CampaignDetail />} />
-        <Route path="/insights" element={<Insights />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/segments" element={<Segments />} />
+                <Route path="/campaigns/new" element={<CampaignBuilder />} />
+                <Route path="/campaigns/:id" element={<CampaignDetail />} />
+                <Route path="/insights" element={<Insights />} />
                 <Route path="/import" element={<DataImport />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>

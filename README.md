@@ -15,6 +15,7 @@ A production-quality, AI-native Mini CRM built for D2C/retail brands. Helps mark
 - ⚡ **Real-Time Live Dashboard (SSE):** As delivery webhooks hit the CRM Backend, Server-Sent Events (SSE) instantly push the aggregated stats to the React frontend, animating the delivery progress bars in real-time without polling.
 - 📊 **AI Campaign Insights:** Post-campaign, the AI analyzes the final delivery statistics (sent, delivered, opened, clicked, failed) to generate actionable marketing insights and suggestions for future outreach.
 - 🛡️ **Idempotent Delivery Webhooks:** Callback webhooks use strict idempotency keys and SQL `ARRAY_POSITION` checks to ensure message states only move forward (`queued → sent → delivered → opened → clicked`) and eliminate race conditions.
+- 🔐 **Google OAuth & JWT Security:** Secure, one-click 'Login with Google' authentication for tenants, utilizing cryptographically secure JSON Web Tokens (JWT) for session management and API authorization.
 
 ---
 
@@ -135,7 +136,7 @@ This starts all 3 services concurrently:
 
 | Area | Current | At Scale |
 |------|---------|----------|
-| **Auth** | None (commented `TODO`) | JWT + role-based access control |
+| **Auth** | Google OAuth + JWT | Full RBAC (Role-Based Access Control) for multiple team members |
 | **Database** | Single PostgreSQL | Read replicas, connection pooler (PgBouncer) |
 | **Queue** | Single Redis | Redis Cluster, separate queues per channel |
 | **SSE** | In-memory Map | Redis Pub/Sub for multi-instance broadcasting |
@@ -196,7 +197,6 @@ This starts all 3 services concurrently:
 
 ## Tradeoffs
 
-- **No authentication** — `// TODO: Add JWT auth for production`
 - **No A/B testing** — future scope
 - **No real messaging provider** — channel stub is intentional for the assignment
 - **No horizontal scaling** — single Express instance is fine for demo

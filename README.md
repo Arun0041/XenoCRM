@@ -80,10 +80,10 @@ npm install
 
 ```bash
 # Copy the example and edit with your credentials
-cp .env.example packages/crm-backend/.env
-cp .env.example packages/channel-stub/.env
+cp .env.example packages/backend/.env
+cp .env.example packages/message-simulator/.env
 
-# Edit packages/crm-backend/.env:
+# Edit packages/backend/.env:
 # DATABASE_URL=postgresql://postgres:postgres@localhost:5432/xenocrm
 # REDIS_URL=redis://localhost:6379
 ```
@@ -110,7 +110,7 @@ npm run dev
 This starts all 3 services concurrently:
 - **Frontend**: http://localhost:5173
 - **CRM Backend**: http://localhost:3001
-- **Channel Stub**: http://localhost:3002
+- **Message Simulator**: http://localhost:3002
 
 ---
 
@@ -144,7 +144,7 @@ This starts all 3 services concurrently:
 | **A/B Testing** | Not implemented | Message variant testing with statistical significance |
 | **Horizontal Scaling** | Single Express instance | Kubernetes with auto-scaling, separate worker pods |
 | **Monitoring** | Console logs | Prometheus + Grafana, Sentry for errors |
-| **Real Messaging** | Channel stub | Twilio/Gupshup integration with provider failover |
+| **Real Messaging** | Message simulator | Twilio/Gupshup integration with provider failover |
 
 ---
 
@@ -175,7 +175,7 @@ This starts all 3 services concurrently:
 | POST | `/api/ai/insight` | AI campaign insight (streaming) |
 | GET | `/api/health` | Health check |
 
-### Channel Stub (port 3002)
+### Message Simulator (port 3002)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

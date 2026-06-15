@@ -24,7 +24,7 @@ A production-quality, AI-native Mini CRM built for D2C/retail brands. Helps mark
 ```
 ┌──────────────────┐     ┌───────────────────────┐     ┌──────────────────┐
 │                  │     │                       │     │                  │
-│    React App     │────▶│   CRM Backend (3001)  │────▶│  Channel Stub    │
+│    React App     │────▶│     Backend (3001)    │────▶│Message Simulator │
 │    (Vite 5173)   │     │   Express + BullMQ    │     │  (Express 3002)  │
 │                  │◀────│                       │◀────│                  │
 │  • Dashboard     │ SSE │  • Segmentation       │ CB  │  • Simulate      │
@@ -47,9 +47,9 @@ A production-quality, AI-native Mini CRM built for D2C/retail brands. Helps mark
 ### Message Delivery Flow
 
 ```
-Campaign Send ──▶ Personalize ──▶ Enqueue (BullMQ) ──▶ Worker POSTs to Channel Stub
+Campaign Send ──▶ Personalize ──▶ Enqueue (BullMQ) ──▶ Worker POSTs to Simulator
                                                               │
-Channel Stub accepts immediately                              │
+Message Simulator accepts immediately                         │
   └── Simulates: delivered/opened/read/clicked/failed         │
       └── Async callbacks (with retry) ──▶ CRM /receipt ──▶ Update DB
                                                               │
